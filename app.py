@@ -154,3 +154,139 @@ with tab1:
     # Logika Hitung Kalkulator 1
     harga_tanah_terkoreksi = harga_penawaran_k1 * (1 - diskon_k1)
     tanah_bersih = luas_tanah_k1 * harga_tanah_terkoreksi
+
+    umur_aktual = max(0, 2026 - tahun_berdiri_k1)
+    depresiasi = min(1.0, umur_aktual / 20)  # Asumsi umur ekonomis bangunan 20 thn
+    bangunan_pasar = (luas_bangunan_k1 * btb_k1) * (1 - depresiasi)
+
+    properti_total = tanah_bersih + bangunan_pasar
+    gim_hasil = properti_total / sewa_k1 if sewa_k1 > 0 else 0
+
+    st.markdown("---")
+    st.subheader("📋 Ringkasan Hasil Analisis Properti (Kalkulator 1):")
+    st.write(
+        f"• Nilai Dasar Tanah Ternegosiasi: **Rp {harga_tanah_terkoreksi:,.2f} / m²**"
+    )
+    st.write(f"• Total Nilai Aset Tanah: **Rp {tanah_bersih:,.2f}**")
+    st.write(
+        f"• Nilai Realistis Bangunan (Setelah Penyusutan {depresiasi*100:.0f}%): **Rp {bangunan_pasar:,.2f}**"
+    )
+    st.write(
+        f"• Estimasi Total Nilai Properti Kedudukan Ruko: **Rp {properti_total:,.2f}**"
+    )
+    st.write("")
+    st.metric(label="HASIL HITUNG NILAI GIM PROPERTI", value=f"{gim_hasil:.2f}")
+
+
+# --- TAB 2: KALKULATOR PREDIKSI HARGA SEWA (UPDATE: LUAS EFEKTIF) ---
+with tab2:
+    st.header("Kalkulator 2: Memprediksi Harga Sewa ATM")
+    st.write(
+        "Gunakan jika Anda ingin mencari rekomendasi tarif harga sewa space ATM yang ideal berbasis proporsional luas efektif."
+    )
+
+    gim_digunakan = st.number_input(
+        "GIM Benchmark Pasar yang Digunakan (Otomatis Tersinkron Database)",
+        value=gim_pasar_default,
+        step=0.1,
+        key="gim_ref",
+    )
+
+    col3, col4 = st.columns(2)
+    with col3:
+        luas_atm = st.number_input(
+            "Luas Lantai ATM (m²)", value=3.0, step=0.5, key="la2"
+        )
+        l_tanah_total = st.number_input(
+            "Luas Tanah Total Gedung Induk (m²)", value=200, step=10, key="lt2"
+        )
+        h_tanah_m2 = st.number_input(
+            "Harga Pasar Tanah Wilayah per m² (Rp)",
+            value=3500000,
+            step=500000,
+            key="ht2",
+        )
+        # UPDATE: Menggunakan Luas Bangunan Efektif sebagai variabel utama
+        l_bangunan_efektif = st.number_input(
+            "Luas Bangunan Efektif Gedung Induk (m²)",
+            value=100,
+            step=5,
+            key="lb_efektif2",
+        )
+
+    with col4:
+        btb_k2 = st.number_input(
+            "BTB Gedung Induk per m² (Rp)",
+            value=4500000,
+            step=500000,
+            key="btb2",
+        )
+        tahun_berdiri_k2 = st.number_input(
+            "Tahun Berdiri Gedung Induk",
+            value=2020,
+            min_value=1980,
+            max_value=2026,
+            key="thn2",
+        )
+        tipe_mesin = st.selectbox(
+            "Tipe Fungsi Mesin ATM",
+            ["CRM (Setor Tarik)", "ATM (Tarik Tunai Saja)"],
+            key="mesin2",
+        )
+        listrik = st.radio(
+            "Fasilitas Biaya Listrik",
+            ["Include Listrik (Ditanggung Gedung)", "Exclude Listrik"],
+            key="list2",
+        )
+        akses_jalan = st.selectbox(
+            "Aksesibilitas Lokasi Jalan",
+            ["Jalan Utama / Arteri", "Jalan Biasa / Masuk"],
+            key="jalan2",
+        )
+
+    # --- LOGIKA HITUNG KALKULATOR 2 DENGAN LUAS EFEKTIF ---
+    # 1. Nilai tanah proporsional ATM terhadap Luas Tanah Gedung Induk
+    rasio_tanah = luas_atm / l_tanah_total
+    v_tanah_atm = (l_tanah_total * h_tanah_m2) * rasio_tanah
+
+    # 2. Nilai bangunan proporsional ATM terhadap Luas Bangunan Efektif
+    umur_akt_k2 = max(0, 2026 - tahun_berdiri_k2)
+    dep_k2 = min(1.0, umur_akt_k2 / 20)
+
+    # Nilai depresiasi dihitung dari total luas bangunan efektif induk
+    v_bangunan_dep = (l_bangunan_efektif * btb_k2) * (1 - dep_k2)
+    rasio_bgn = luas_atm / l_bangunan_efektif
+    v_bangunan_atm = v_bangunan_dep * rasio_bgn
+
+    # 3. Total nilai space fisik ATM
+    total_space_atm = v_tanah_atm + v_bangunan_atm
+
+    # 4. Faktor Penyesuaian Jalan dan Sewa Dasar Bersih
+    f_jalan = 1.2 if akses_jalan == "Jalan Utama / Arteri" else 1.0
+    sewa_dasar = (
+        (total_space_atm * f_jalan) / gim_digunakan if gim_digunakan > 0 else 0
+    )
+
+    # 5. Penyesuaian Fasilitas Tambahan
+    b_listrik = 12000000 if "Include" in listrik else 0
+    b_crm = 3000000 if "CRM" in tipe_mesin else 0
+    rekomendasi_sewa = sewa_dasar + b_listrik + b_crm
+
+    st.markdown("---")
+    st.subheader("📋 Komponen Perhitungan & Rekomendasi Sewa (Kalkulator 2):")
+    st.write(
+        f"• Rasio Luas ATM / Luas Bangunan Efektif Induk: **{rasio_bgn*100:.2f}%**"
+    )
+    st.write(f"• Nilai Tanah Proporsional (Luas ATM): **Rp {v_tanah_atm:,.2f}**")
+    st.write(
+        f"• Nilai Bangunan Proporsional (Berbasis Luas Efektif Terdepresiasi): **Rp {v_bangunan_atm:,.2f}**"
+    )
+    st.write(f"• Total Nilai Fisik Proposional Booth: **Rp {total_space_atm:,.2f}**")
+    st.write(f"• Harga Sewa Dasar Bersih / Tahun: **Rp {sewa_dasar:,.2f}**")
+    st.write(
+        f"• Tambahan Operasional (Beban Listrik & Mekanis CRM): **Rp {b_listrik + b_crm:,.2f}**"
+    )
+    st.write("")
+    st.success(
+        f"💡 **REKOMENDASI TARIF SEWA ATM IDEAL: Rp {rekomendasi_sewa:,.2f} / Tahun**"
+    )
