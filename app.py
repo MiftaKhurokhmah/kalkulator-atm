@@ -16,6 +16,8 @@ st.write(
 # SIDEBAR: UPLOAD & FILTER DATABASE
 # ==============================================================================
 st.sidebar.header("📁 1. Database Pembanding")
+
+# --- PERBAIKAN UTAMA: Menggunakan fungsi file_uploader yang benar ---
 file_diupload = st.sidebar.file_uploader(
     "Upload File CSV Pembanding", type=["csv"]
 )
@@ -47,7 +49,6 @@ if file_diupload is not None:
                 Q3 = data_gim.quantile(0.75)
                 IQR = Q3 - Q1
 
-                # --- PERBAIKAN TYPO DI SINI ---
                 batas_bawah = Q1 - (1.5 * IQR)
                 batas_atas = Q3 + (1.5 * IQR)
 
@@ -156,6 +157,7 @@ with tab1:
     harga_tanah_terkoreksi = harga_penawaran_k1 * (1 - diskon_k1)
     tanah_bersih = luas_tanah_k1 * harga_tanah_terkoreksi
 
+    # Set patokan tahun penilaian saat ini ke 2026
     umur_aktual = max(0, 2026 - tahun_berdiri_k1)
     depresiasi = min(1.0, umur_aktual / 20)  # Asumsi umur ekonomis bangunan 20 thn
     bangunan_pasar = (luas_bangunan_k1 * btb_k1) * (1 - depresiasi)
@@ -245,6 +247,7 @@ with tab2:
     rasio_tanah = luas_atm / l_tanah_total
     v_tanah_atm = (l_tanah_total * h_tanah_m2) * rasio_tanah
 
+    # Set patokan tahun penilaian saat ini ke 2026
     umur_akt_k2 = max(0, 2026 - tahun_berdiri_k2)
     dep_k2 = min(1.0, umur_akt_k2 / 20)
     v_bangunan_dep = (l_bangunan_total * btb_k2) * (1 - dep_k2)
