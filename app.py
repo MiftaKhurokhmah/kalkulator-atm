@@ -21,7 +21,7 @@ file_diupload = st.sidebar.file_uploader(
     "Upload File CSV Pembanding", type=["csv"]
 )
 
-gim_pasar_default = 13.5  # Nilai default jika belum ada file yang diupload
+gim_pasar_default = 3.38  # Nilai default jika belum ada file yang diupload
 
 if file_diupload is not None:
     try:
