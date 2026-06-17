@@ -78,11 +78,10 @@ jenis_atm = st.sidebar.selectbox(
     "Jenis Mesin ATM", ["Setor Tarik (CRM)", "Tarik Tunai Saja"]
 )
 jarak_jalan_utama = st.sidebar.number_input(
-    "Jarak ke Jalan Utama atau Keramaian (Meter)", min_value=0, value=10
+    "Jarak ke Jalan Utama (Meter)", min_value=0, value=10
 )
 
 # Baseline dasar GIM pasar berdasarkan data excel riil (setelah sewa dikurangi biaya listrik)
-# Nilai adjustment mobilitas diset 0 karena klasterisasi angka GIM sudah mencerminkan tingkat mobilitas
 if mobilitas == "Ramai":
     gim_pasar_default = 2.7475567
     nilai_adj_mobilitas = 0
@@ -147,6 +146,7 @@ else:
     )
 
 # Konversi Kualitatif menjadi Penyesuaian Nominal Rupiah untuk karakteristik non-GIM
+# Nilai adjustment jenis ATM disesuaikan menjadi 3 juta agar perbedaan sewa lebih rasional
 nilai_adj_jenis = 3000000 if jenis_atm == "Setor Tarik (CRM)" else 0
 nilai_adj_jarak = max(
     0, (100 - jarak_jalan_utama) * 150000
@@ -194,7 +194,7 @@ tab1, tab2 = st.tabs(
     ]
 )
 
-# --- KALKULATOR 1: MENCARI GIM (REVISI PILIHAN LISTRIK) ---
+# --- KALKULATOR 1: MENCARI GIM ---
 with tab1:
     st.header("Kalkulator GIM (Gross Income Multiplier)")
     st.write(
@@ -249,24 +249,41 @@ with tab1:
     else:
         st.error("Error: Harga sewa setelah dikurangi biaya listrik tidak boleh kurang dari atau sama dengan Rp 0!")
 
-# --- KALKULATOR 2: PREDIKSI HARGA SEWA ---
+# --- KALKULATOR 2: PREDIKSI HARGA SEWA (REVISI MULTI-OPSI GIM) ---
 with tab2:
     st.header("Kalkulator Harga Sewa Tahunan")
     st.write(
         "Menghitung proyeksi harga sewa tahunan yang ideal berdasarkan angka GIM pasar dari karakteristik sejenis."
     )
 
-    col_gim, col_listrik = st.columns(2)
+    col_metode, col_gim_val, col_listrik = st.columns(3)
 
-    with col_gim:
-        gim_pasar_input = st.number_input(
-            "GIM dari Pasar (Otomatis menyesuaikan tingkat mobilitas)",
-            min_value=0.1,
-            value=float(gim_pasar_default),
-            step=0.1,
-            format="%.4f",
-            key="k2_gim",
+    with col_metode:
+        metode_gim = st.radio(
+            "Metode Penentuan GIM Pasar:",
+            ["Otomatis dari Pasar (Sesuai Sidebar)", "Input Manual (Kustom)"],
+            key="k2_metode"
         )
+
+    with col_gim_val:
+        # Jika memilih otomatis, kolom di-disable dan nilainya mengunci data sidebar
+        if metode_gim == "Otomatis dari Pasar (Sesuai Sidebar)":
+            gim_pasar_input = st.number_input(
+                f"GIM Terkunci ({mobilitas})",
+                value=float(gim_pasar_default),
+                format="%.4f",
+                disabled=True,
+                key="k2_gim_auto"
+            )
+        else:
+            gim_pasar_input = st.number_input(
+                "Masukkan Angka GIM Manual",
+                min_value=0.1,
+                value=float(gim_pasar_default),
+                step=0.1,
+                format="%.4f",
+                key="k2_gim_manual"
+            )
 
     with col_listrik:
         opsi_listrik = st.selectbox(
