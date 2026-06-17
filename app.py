@@ -81,8 +81,8 @@ jarak_jalan_utama = st.sidebar.number_input(
     "Jarak ke Jalan Utama (Meter)", min_value=0, value=10
 )
 
-# Baseline dasar GIM pasar berdasarkan data terbaru (setelah tarif sewa dikurangi listrik)
-# Nilai adjustment mobilitas di-set ke 0 karena sudah melekat (include) pada masing-masing klaster GIM
+# Baseline dasar GIM pasar berdasarkan data excel riil (setelah sewa dikurangi biaya listrik)
+# Nilai adjustment mobilitas diset 0 karena klasterisasi angka GIM sudah mencerminkan tingkat mobilitas
 if mobilitas == "Ramai":
     gim_pasar_default = 2.7475567
     nilai_adj_mobilitas = 0
@@ -146,7 +146,7 @@ else:
         f"ℹ️ Baseline GIM ({mobilitas}): {gim_pasar_default:.4f}"
     )
 
-# Konversi Kualitatif menjadi Penyesuaian Nominal Rupiah untuk karakteristik di luar mobilitas/traffic
+# Konversi Kualitatif menjadi Penyesuaian Nominal Rupiah untuk karakteristik non-GIM
 nilai_adj_jenis = 10000000 if jenis_atm == "Setor Tarik (CRM)" else 0
 nilai_adj_jarak = max(
     0, (100 - jarak_jalan_utama) * 150000
@@ -156,18 +156,18 @@ total_penyesuaian = nilai_adj_mobilitas + nilai_adj_jenis + nilai_adj_jarak
 
 
 # ==============================================================================
-# PROSES UTAMA PERHITUNGAN MATEMATIKA (BOOTH/SPACE ATM)
+# PROSES UTAMA PERHITUNGAN MATEMATIKA
 # ==============================================================================
-# 1. Nilai tanah ATM proporsional
+# 1. Nilai tanah ATM
 nilai_tanah_atm = (
     (luas_atm / luas_efektif_bangunan) * luas_tanah_total * harga_tanah_m2
 )
 
-# 2. Nilai bangunan ATM terdepresiasi proporsional
+# 2. Nilai bangunan ATM terdepresiasi
 nilai_bangunan_bersih = (luas_bangunan * btb_baru) - depresiasi_total_gedung
 nilai_bangunan_atm = (luas_atm / luas_efektif_bangunan) * nilai_bangunan_bersih
 
-# 3. Nilai ATM Total (Pembilang Rumus GIM)
+# 3. Nilai ATM Total
 nilai_atm_total = nilai_tanah_atm + nilai_bangunan_atm + total_penyesuaian
 
 
@@ -194,7 +194,7 @@ tab1, tab2 = st.tabs(
     ]
 )
 
-# --- KALKULATOR 1: MENCARI GIM ---
+# --- KALKULATOR 1: MENCARI GIM (REVISI PILIHAN LISTRIK) ---
 with tab1:
     st.header("Kalkulator GIM (Gross Income Multiplier)")
     st.write(
@@ -219,7 +219,7 @@ with tab1:
             key="k1_listrik_opsi"
         )
 
-    # Logika Pengurangan Pembagi: Jika include listrik, kurangi sewa aktual (i) sebesar Rp 3.000.000 untuk mendapatkan h bersih
+    # Logika Pengurangan Pembagi: Jika include listrik, kurangi sewa aktual (i) dengan biaya listrik Rp3.000.000 untuk dapat nilai bersih (h)
     if opsi_listrik_k1 == "Include Listrik":
         biaya_listrik_k1 = 3000000
         harga_sewa_pembagi = harga_sewa_k1 - biaya_listrik_k1
@@ -276,10 +276,10 @@ with tab2:
         )
 
     if gim_pasar_input > 0:
-        # 1. Hitung nilai sewa bersih h (Tarif Sewa - Biaya Listrik) dari formula dasar kapitalisasi GIM
+        # 1. Hitung nilai sewa bersih h dari formula dasar kapitalisasi GIM
         tarif_sewa_minus_listrik = nilai_atm_total / gim_pasar_input
 
-        # 2. Tambahkan biaya listrik Rp 3.000.000 ke atas nilai sewa bersih jika opsi yang dipilih adalah Include Listrik
+        # 2. Tambahkan biaya listrik Rp3.000.000 ke atas nilai sewa bersih jika opsi Include Listrik dipilih
         if opsi_listrik == "Include Listrik":
             biaya_listrik = 3000000
             harga_sewa_prediksi = tarif_sewa_minus_listrik + biaya_listrik
