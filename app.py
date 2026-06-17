@@ -172,7 +172,7 @@ else:
 nilai_adj_jenis = 3000000 if jenis_atm == "Setor Tarik (CRM)" else 0
 nilai_adj_jarak = max(0, (100 - jarak_jalan_utama) * 150000)
 
-total_penyesuaian = nilai_adj_mobilitas + nilai_adj_jenis + nilai_adj_jarak
+total_penyesuaian = nilai_adj_jenis + nilai_adj_jarak
 
 
 # ==============================================================================
@@ -184,7 +184,8 @@ nilai_tanah_atm = (
 )
 
 # 2. Nilai bangunan ATM terdepresiasi
-nilai_bangunan_bersih = (luas_bangunan * btb_baru) - depresiasi_total_gedung
+nilai_bangunan_gedung_baru = luas_bangunan * btb_baru
+nilai_bangunan_bersih = nilai_bangunan_gedung_baru - depresiasi_total_gedung
 nilai_bangunan_atm = (luas_atm / luas_efektif_bangunan) * nilai_bangunan_bersih
 
 # 3. Nilai ATM Total (Pembilang untuk GIM dan Pembagi Tarif Sewa)
@@ -252,12 +253,55 @@ with tab1:
         st.markdown("#### Ringkasan Analisis Nilai GIM:")
         st.success(f"### 📈 Nilai Indikasi GIM Objek: **{gim_hasil:.4f} x**")
 
-        with st.expander("Lihat Detail Alur Formula Matematika (Sesuai Karakteristik Data)"):
-            st.write(f"- **Nilai ATM Total (Pembilang `Nilai Space`):** Rp {nilai_atm_total:,.0f}")
-            st.write(f"- **Harga Sewa Bersih (`h`):** Rp {harga_sewa_pembagi:,.0f}")
+        with st.expander("🔍 Lihat Detail Alur Perhitungan & Struktur Logika Pembilang", expanded=True):
+            st.markdown("#### 1. Komponen Pembilang: Perhitungan Nilai Space/Booth ATM")
+            
+            # Detail Tanah
+            st.write(f"**A. Nilai Proporsional Tanah:**")
+            st.markdown(
+                f"""
+                * Rumus: `(Luas ATM / Luas Efektif Bangunan) * Luas Tanah Total * Harga Tanah per m²`
+                * Kalkulasi: `({luas_atm} / {luas_efektif_bangunan:.2f}) * {luas_tanah_total} * Rp {harga_tanah_m2:,.0f}`
+                * Hasil Nilai Tanah Proporsional = **Rp {nilai_tanah_atm:,.0f}**
+                """
+            )
+            
+            # Detail Depresiasi & Bangunan
+            st.write(f"**B. Nilai Proporsional Bangunan Terdepresiasi:**")
+            st.markdown(
+                f"""
+                * Jenis Bangunan Induk: `{jenis_bangunan}` $\\rightarrow$ Umur Ekonomis = **{umur_ekonomis} Tahun**
+                * Akumulasi Penyusutan: `({tahun_sekarang} - {tahun_dibangun}) / {umur_ekonomis} = {umur_aktual}/{umur_ekonomis} ({rasio_depresiasi*100:.1f}%)`
+                * Nilai Bersih Bangunan Induk: `Rp {nilai_bangunan_gedung_baru:,.0f} - Rp {depresiasi_total_gedung:,.0f} = Rp {nilai_bangunan_bersih:,.0f}`
+                * Proporsi Bangunan ATM: `({luas_atm} / {luas_efektif_bangunan:.2f}) * Rp {nilai_bangunan_bersih:,.0f}`
+                * Hasil Nilai Bangunan Proporsional = **Rp {nilai_bangunan_atm:,.0f}**
+                """
+            )
+
+            # Detail Penyesuaian
+            st.write(f"**C. Faktor Penyesuaian Karakteristik (Adjustment Nominal):**")
+            st.markdown(
+                f"""
+                * Penyesuaian Jenis ATM (`{jenis_atm}`): `Rp {nilai_adj_jenis:,.0f}`
+                * Penyesuaian Jarak ke Jalan Utama (`{jarak_jalan_utama} meter`): `Rp {nilai_adj_jarak:,.0f}`
+                * Total Tambahan Nilai Penyesuaian = **Rp {total_penyesuaian:,.0f}**
+                """
+            )
+
+            st.info(f"**🟢 Total Nilai Space ATM (Pembilang) = A + B + C = Rp {nilai_atm_total:,.0f}**")
+
             st.markdown("---")
+            st.markdown("#### 2. Komponen Pembagi & Nilai GIM Akhir")
+            st.markdown(
+                f"""
+                * Harga Sewa Aktual yang Diinput (`i`): **Rp {harga_sewa_k1:,.0f}**
+                * Pengurangan Komponen Listrik: **Rp {biaya_listrik_k1:,.0f}**
+                * **Harga Sewa Bersih Pembagi (`h`):** `Rp {harga_sewa_k1:,.0f} - Rp {biaya_listrik_k1:,.0f} = Rp {harga_sewa_pembagi:,.0f}`
+                """
+            )
+            
             st.latex(
-                rf"\text{{Nilai GIM}} = \frac{{{nilai_atm_total:,.0f}}}{{{harga_sewa_pembagi:,.0f}}} = {gim_hasil:.4f}"
+                rf"\text{{Nilai GIM Objek}} = \frac{{\text{{Rp }}{nilai_atm_total:,.0f}}}{{\text{{Rp }}{harga_sewa_pembagi:,.0f}}} = {gim_hasil:.4f}"
             )
     else:
         st.error("Error: Harga sewa bersih pembagi tidak boleh kurang dari atau sama dengan Rp 0!")
@@ -322,8 +366,38 @@ with tab2:
             f"### 💵 Estimasi Tarif Sewa (per Tahun): **Rp {harga_sewa_prediksi:,.0f}**"
         )
 
-        with st.expander("Lihat Rincian & Validasi Rumus (h = i - biaya listrik)"):
-            st.write(f"- **Nilai Space Total:** Rp {nilai_atm_total:,.0f}")
-            st.write(f"- **GIM yang Digunakan:** {gim_pasar_input:.4f}")
-            st.write(f"- **Tarif Sewa Bersih (`h`):** Rp {tarif_sewa_minus_listrik:,.0f}")
-            st.write(f"- **Tambahan Biaya Listrik:** Rp {biaya_listrik:,.0f}")
+        with st.expander("🔍 Lihat Detail Alur Perhitungan & Struktur Validasi Formula", expanded=True):
+            st.markdown("#### 1. Komponen Dasar yang Digunakan")
+            st.markdown(
+                f"""
+                * **Nilai Space/Booth ATM Terhitung:** Rp {nilai_atm_total:,.0f} *(Gabungan proporsional Tanah + Bangunan Depresiasi + Adjustment)*
+                * **Angka Indikator GIM Pasar (`GIM`):** {gim_pasar_input:.4f} *(Tingkat mobilitas: {mobilitas})*
+                """
+            )
+            
+            st.markdown("---")
+            st.markdown("#### 2. Langkah Perhitungan Tarif (Sesuai Struktur Rumus)")
+            st.write("**Langkah A: Menghitung Tarif Sewa Bersih Tanpa Komponen Listrik (`h`):**")
+            st.latex(
+                rf"h = \frac{{\text{{Nilai Space ATM}}}}{{\text{{GIM Pasar}}}} = \frac{{\text{{Rp }}{nilai_atm_total:,.0f}}}{{{gim_pasar_input:.4f}}} = \text{{Rp }}{tarif_sewa_minus_listrik:,.0f}"
+            )
+            
+            st.write("**Langkah B: Menyesuaikan Kontrak Fasilitas Listrik Terpilih:**")
+            st.markdown(
+                f"""
+                * Pilihan Fasilitas: `{opsi_listrik}`
+                * Tambahan Biaya Listrik: **Rp {biaya_listrik:,.0f}**
+                """
+            )
+            
+            st.write("**Langkah C: Rumus Akhir Estimasi Tarif Sewa per Tahun (`i`):**")
+            if opsi_listrik == "Include Listrik":
+                st.latex(
+                    rf"i = h + \text{{Biaya Listrik}} = \text{{Rp }}{tarif_sewa_minus_listrik:,.0f} + \text{{Rp }}{biaya_listrik:,.0f}"
+                )
+            else:
+                st.latex(
+                    rf"i = h = \text{{Rp }}{tarif_sewa_minus_listrik:,.0f}"
+                )
+                
+            st.success(f"### 🎉 Rekomendasi Nilai Sewa Wajar (`i`) = **Rp {harga_sewa_prediksi:,.0f} / Tahun**")
