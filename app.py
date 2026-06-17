@@ -147,7 +147,7 @@ else:
     )
 
 # Konversi Kualitatif menjadi Penyesuaian Nominal Rupiah untuk karakteristik non-GIM
-nilai_adj_jenis = 10000000 if jenis_atm == "Setor Tarik (CRM)" else 0
+nilai_adj_jenis = 3000000 if jenis_atm == "Setor Tarik (CRM)" else 0
 nilai_adj_jarak = max(
     0, (100 - jarak_jalan_utama) * 150000
 )  # Semakin dekat jalan utama, penyesuaian semakin tinggi
