@@ -22,7 +22,7 @@ file_diupload = st.sidebar.file_uploader(
 )
 
 # ==============================================================================
-# SIDEBAR INPUT: DATA KARAKTERISTIK OBJEK (DIKONSUMSI OLEH KEDUA KALKULATOR)
+# SIDEBAR INPUT: DATA KARAKTERISTIK OBJEK
 # ==============================================================================
 st.sidebar.markdown("---")
 st.sidebar.header("📐 2. Data Fisik & Bangunan")
@@ -38,6 +38,17 @@ jumlah_lantai = st.sidebar.number_input(
 )
 luas_tanah_total = st.sidebar.number_input(
     "Luas Tanah Total Gedung (m²)", min_value=1.0, value=150.0, step=10.0
+)
+
+# Klasifikasi Jenis Bangunan untuk Menentukan Umur Ekonomis secara Dinamis
+jenis_bangunan = st.sidebar.selectbox(
+    "Klasifikasi Jenis Bangunan Induk",
+    [
+        "Rumah Tinggal Sederhana (25 Tahun)",
+        "Rumah Menengah (35 Tahun)",
+        "Gedung ≤ 4 Lantai (45 Tahun)",
+        "Gedung > 4 Lantai (55 Tahun)"
+    ]
 )
 
 # Logika Luas Bangunan Efektif
@@ -61,12 +72,24 @@ tahun_dibangun = st.sidebar.number_input(
     "Tahun Bangunan Didirikan", min_value=1980, max_value=2026, value=2016
 )
 
-# Perhitungan Depresiasi Bangunan
+# Pemetaan Umur Ekonomis berdasarkan kriteria user
+if "Rumah Tinggal Sederhana" in jenis_bangunan:
+    umur_ekonomis = 25
+elif "Rumah Menengah" in jenis_bangunan:
+    umur_ekonomis = 35
+elif "Gedung ≤ 4 Lantai" in jenis_bangunan:
+    umur_ekonomis = 45
+else:
+    umur_ekonomis = 55
+
+# Perhitungan Depresiasi Bangunan Dinamis: (Tahun Ini - Tahun Berdiri) / Umur Ekonomis
 tahun_sekarang = datetime.date.today().year
-umur_ekonomis = 20  # Asumsi standar umur ekonomis ruko/gedung komersil
 umur_aktual = max(0, tahun_sekarang - tahun_dibangun)
-depresiasi_total_gedung = (luas_bangunan * btb_baru) * (
-    min(1.0, umur_aktual / umur_ekonomis)
+rasio_depresiasi = min(1.0, umur_aktual / umur_ekonomis)
+depresiasi_total_gedung = (luas_bangunan * btb_baru) * rasio_depresiasi
+
+st.sidebar.caption(
+    f"Umur Aktual: {umur_aktual} tahun | Depresiasi: {rasio_depresiasi*100:.1f}%"
 )
 
 st.sidebar.markdown("---")
@@ -146,11 +169,8 @@ else:
     )
 
 # Konversi Kualitatif menjadi Penyesuaian Nominal Rupiah untuk karakteristik non-GIM
-# Nilai adjustment jenis ATM disesuaikan menjadi 3 juta agar perbedaan sewa lebih rasional
 nilai_adj_jenis = 3000000 if jenis_atm == "Setor Tarik (CRM)" else 0
-nilai_adj_jarak = max(
-    0, (100 - jarak_jalan_utama) * 150000
-)  # Semakin dekat jalan utama, penyesuaian semakin tinggi
+nilai_adj_jarak = max(0, (100 - jarak_jalan_utama) * 150000)
 
 total_penyesuaian = nilai_adj_mobilitas + nilai_adj_jenis + nilai_adj_jarak
 
@@ -167,7 +187,7 @@ nilai_tanah_atm = (
 nilai_bangunan_bersih = (luas_bangunan * btb_baru) - depresiasi_total_gedung
 nilai_bangunan_atm = (luas_atm / luas_efektif_bangunan) * nilai_bangunan_bersih
 
-# 3. Nilai ATM Total
+# 3. Nilai ATM Total (Pembilang untuk GIM dan Pembagi Tarif Sewa)
 nilai_atm_total = nilai_tanah_atm + nilai_bangunan_atm + total_penyesuaian
 
 
@@ -198,7 +218,7 @@ tab1, tab2 = st.tabs(
 with tab1:
     st.header("Kalkulator GIM (Gross Income Multiplier)")
     st.write(
-        "Menghitung indikasi nilai GIM objek dengan memasukkan data harga sewa tahunan aktual yang disesuaikan dengan komponen biaya listrik."
+        "Menghitung indikasi nilai GIM objek dengan memasukkan data harga sewa tahunan aktual."
     )
 
     col_sewa_k1, col_listrik_k1 = st.columns(2)
@@ -219,7 +239,6 @@ with tab1:
             key="k1_listrik_opsi"
         )
 
-    # Logika Pengurangan Pembagi: Jika include listrik, kurangi sewa aktual (i) dengan biaya listrik Rp3.000.000 untuk dapat nilai bersih (h)
     if opsi_listrik_k1 == "Include Listrik":
         biaya_listrik_k1 = 3000000
         harga_sewa_pembagi = harga_sewa_k1 - biaya_listrik_k1
@@ -234,22 +253,16 @@ with tab1:
         st.success(f"### 📈 Nilai Indikasi GIM Objek: **{gim_hasil:.4f} x**")
 
         with st.expander("Lihat Detail Alur Formula Matematika (Sesuai Karakteristik Data)"):
-            st.write(f"- **Nilai ATM Total (Pembilang):** Rp {nilai_atm_total:,.0f}")
-            st.write(f"- **Harga Sewa Aktual (`i`):** Rp {harga_sewa_k1:,.0f}")
-            st.write(f"- **Biaya Listrik Ditanggung Pemilik Lahan:** Rp {biaya_listrik_k1:,.0f}")
-            st.write(f"- **Harga Sewa Bersih Pembagi (`h`):** Rp {harga_sewa_pembagi:,.0f}")
+            st.write(f"- **Nilai ATM Total (Pembilang `Nilai Space`):** Rp {nilai_atm_total:,.0f}")
+            st.write(f"- **Harga Sewa Bersih (`h`):** Rp {harga_sewa_pembagi:,.0f}")
             st.markdown("---")
-            
             st.latex(
-                r"\text{Nilai GIM} = \frac{\text{Nilai ATM Total}}{\text{Harga Sewa Aktual (i)} - \text{Biaya Listrik}}"
-            )
-            st.latex(
-                rf"\text{{Nilai GIM}} = \frac{{{nilai_atm_total:,.0f}}}{{{harga_sewa_k1:,.0f} - {biaya_listrik_k1:,.0f}}} = {gim_hasil:.4f}"
+                rf"\text{{Nilai GIM}} = \frac{{{nilai_atm_total:,.0f}}}{{{harga_sewa_pembagi:,.0f}}} = {gim_hasil:.4f}"
             )
     else:
-        st.error("Error: Harga sewa setelah dikurangi biaya listrik tidak boleh kurang dari atau sama dengan Rp 0!")
+        st.error("Error: Harga sewa bersih pembagi tidak boleh kurang dari atau sama dengan Rp 0!")
 
-# --- KALKULATOR 2: PREDIKSI HARGA SEWA (PERBAIKAN LOGIKA OTOMATIS) ---
+# --- KALKULATOR 2: PREDIKSI HARGA SEWA ---
 with tab2:
     st.header("Kalkulator Harga Sewa Tahunan")
     st.write(
@@ -265,7 +278,6 @@ with tab2:
             key="k2_metode"
         )
 
-    # Perbaikan Kritis: Memisahkan komponen agar fungsi re-render Streamlit ter-trigger otomatis
     with col_gim_val:
         if metode_gim == "Otomatis dari Pasar (Sesuai Sidebar)":
             gim_pasar_input = st.number_input(
@@ -275,7 +287,7 @@ with tab2:
                 value=float(gim_pasar_default),
                 format="%.4f",
                 disabled=True,
-                key=f"k2_gim_auto_{mobilitas}"  # Key unik berbasis status mobilitas memicu refresh widget otomatis
+                key=f"k2_gim_auto_{mobilitas}"
             )
         else:
             gim_pasar_input = st.number_input(
@@ -295,10 +307,9 @@ with tab2:
         )
 
     if gim_pasar_input > 0:
-        # 1. Hitung nilai sewa bersih h dari formula dasar kapitalisasi GIM
+        # Tarif sewa bersih (h) = Nilai Booth / GIM Pasar
         tarif_sewa_minus_listrik = nilai_atm_total / gim_pasar_input
 
-        # 2. Tambahkan biaya listrik Rp3.000.000 ke atas nilai sewa bersih jika opsi Include Listrik dipilih
         if opsi_listrik == "Include Listrik":
             biaya_listrik = 3000000
             harga_sewa_prediksi = tarif_sewa_minus_listrik + biaya_listrik
@@ -312,14 +323,7 @@ with tab2:
         )
 
         with st.expander("Lihat Rincian & Validasi Rumus (h = i - biaya listrik)"):
-            st.write(f"**Hasil Prediksi Komponen:**")
-            st.write(f"- Estimasi Tarif Sewa per Tahun (`i`): **Rp {harga_sewa_prediksi:,.0f}**")
-            st.write(f"- Biaya Listrik: **Rp {biaya_listrik:,.0f}**")
-            st.markdown("---")
-            st.write(f"**Validasi Parameter Kolom Database Anda:**")
-            st.write(
-                f"- **Tarif Sewa - Biaya Listrik (`h`):** Rp {tarif_sewa_minus_listrik:,.0f} *(Hasil dari Nilai ATM ÷ GIM)*"
-            )
-            st.caption(
-                f"Sesuai formula Anda: jika include listrik maka h = {harga_sewa_prediksi:,.0f} - {biaya_listrik:,.0f} = {harga_sewa_prediksi - biaya_listrik:,.0f}"
-            )
+            st.write(f"- **Nilai Space Total:** Rp {nilai_atm_total:,.0f}")
+            st.write(f"- **GIM yang Digunakan:** {gim_pasar_input:.4f}")
+            st.write(f"- **Tarif Sewa Bersih (`h`):** Rp {tarif_sewa_minus_listrik:,.0f}")
+            st.write(f"- **Tambahan Biaya Listrik:** Rp {biaya_listrik:,.0f}")
