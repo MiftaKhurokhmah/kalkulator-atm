@@ -8,7 +8,7 @@ st.set_page_config(
     page_title="Kalkulator GIM & Sewa ATM", page_icon="🖥️", layout="wide"
 )
 
-st.title("🖥️ Kalkulator GIM & Prediksi Harga Sewa ATM")
+st.title("🖥️ Kalkulator GIM & Prediksi Harga Sewa ATM oleh Kelompok 6 Prakerin MPP 2024")
 st.write(
     "Aplikasi web interaktif untuk menentukan kelayakan nilai sewa space/booth ATM sesuai karakteristik fisik dan lokasi."
 )
