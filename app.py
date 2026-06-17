@@ -78,7 +78,7 @@ jenis_atm = st.sidebar.selectbox(
     "Jenis Mesin ATM", ["Setor Tarik (CRM)", "Tarik Tunai Saja"]
 )
 jarak_jalan_utama = st.sidebar.number_input(
-    "Jarak ke Jalan Utama (Meter)", min_value=0, value=10
+    "Jarak ke Jalan Utama/Keramaian (Meter)", min_value=0, value=10
 )
 
 # Baseline dasar GIM pasar berdasarkan data excel riil (setelah sewa dikurangi biaya listrik)
