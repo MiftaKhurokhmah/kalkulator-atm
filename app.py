@@ -81,15 +81,15 @@ jarak_jalan_utama = st.sidebar.number_input(
     "Jarak ke Jalan Utama (Meter)", min_value=0, value=10
 )
 
-# Baseline dasar GIM pasar berdasarkan data excel riil (setelah sewa dikurangi biaya listrik)
+# Baseline dasar GIM pasar berdasarkan data excel riil terbaru Anda
 if mobilitas == "Ramai":
-    gim_pasar_default = 2.7475567
+    gim_pasar_default = 2.3130482
     nilai_adj_mobilitas = 0
 elif mobilitas == "Sedang":
-    gim_pasar_default = 2.1902831
+    gim_pasar_default = 1.8583195
     nilai_adj_mobilitas = 0
 else:  # Sepi
-    gim_pasar_default = 2.8581090
+    gim_pasar_default = 2.3032198
     nilai_adj_mobilitas = 0
 
 # Jika file CSV diupload, override nilai gim_pasar_default dengan hasil perhitungan CSV
@@ -249,7 +249,7 @@ with tab1:
     else:
         st.error("Error: Harga sewa setelah dikurangi biaya listrik tidak boleh kurang dari atau sama dengan Rp 0!")
 
-# --- KALKULATOR 2: PREDIKSI HARGA SEWA (REVISI MULTI-OPSI GIM) ---
+# --- KALKULATOR 2: PREDIKSI HARGA SEWA (PERBAIKAN LOGIKA OTOMATIS) ---
 with tab2:
     st.header("Kalkulator Harga Sewa Tahunan")
     st.write(
@@ -265,15 +265,17 @@ with tab2:
             key="k2_metode"
         )
 
+    # Perbaikan Kritis: Memisahkan komponen agar fungsi re-render Streamlit ter-trigger otomatis
     with col_gim_val:
-        # Jika memilih otomatis, kolom di-disable dan nilainya mengunci data sidebar
         if metode_gim == "Otomatis dari Pasar (Sesuai Sidebar)":
             gim_pasar_input = st.number_input(
                 f"GIM Terkunci ({mobilitas})",
+                min_value=0.0,
+                max_value=10.0,
                 value=float(gim_pasar_default),
                 format="%.4f",
                 disabled=True,
-                key="k2_gim_auto"
+                key=f"k2_gim_auto_{mobilitas}"  # Key unik berbasis status mobilitas memicu refresh widget otomatis
             )
         else:
             gim_pasar_input = st.number_input(
