@@ -368,7 +368,7 @@ with tab2:
         st.markdown("### 💡 Mengapa Angka GIM Variatif & Dinamis? (Justifikasi Data Pasar)")
         st.info(
             f"""
-            Analisis ini menggunakan rujukan data pasar riil ter-update (**Versi Data C**): 
+            Analisis ini menggunakan rujukan data pasar riil yang telah diolah: 
             * **Ramai:** `2.4430` | **Sedang:** `1.7043` | **Sepi:** `2.8581`
             
             Mungkin Anda menyadari adanya anomali di mana **Lokasi Sepi memiliki nilai GIM yang lebih tinggi** dibandingkan Lokasi Sedang maupun Ramai. Berikut rincian analisis dasarnya:
