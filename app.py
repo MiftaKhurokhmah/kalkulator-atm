@@ -373,9 +373,11 @@ with tab2:
             
             Mungkin Anda menyadari adanya anomali di mana **Lokasi Sepi memiliki nilai GIM yang lebih tinggi** dibandingkan Lokasi Sedang maupun Ramai. Berikut rincian analisis dasarnya:
             
-            1. **Lokasi Sepi (GIM Tinggi - {2.8581:.4f}x):** Terjadi fenomena *Low Base Effect*. Pada wilayah sepi, harga sewa tahunan yang ditawarkan sangat rendah (sebagai angka pembagi rumus). Namun, biaya investasi fisik bangunan standardisasi ATM memiliki nilai batas minimum yang konstan. Rasio pembagian antara nilai aset fisik dan nilai sewa yang sangat kecil inilah yang melonjakkan nilai GIM.
-            2. **Lokasi Ramai (GIM Tinggi - {2.4430:.4f}x):** Pada zona premium, nilai kapitalisasi aset tanah sangat mendominasi. Meskipun pihak perbankan bersedia membayar harga sewa tinggi, nilai pasar properti intrinsik yang mahal menjaga angka multiplier tetap kuat.
-            3. **Lokasi Sedang (GIM Moderat - {1.7043:.4f}x):** Merupakan *Sweet Spot* atau titik ekuilibrium pasar yang paling efisien. Nilai properti dan harga sewa tahunan yang terbentuk di lapangan saling mengimbangi secara proporsional.
+            1. **🔴 Lokasi Sepi (GIM Tertinggi — {2.8581:.4f}x):** Di area yang sepi, harga sewa tahunan drop menjadi sangat murah. Namun, biaya untuk membangun fisik ATM (seperti beton, kaca, AC, dan interior standar) memiliki batas minimum yang tidak bisa ikut murah begitu saja. Karena nilai fisik bangunan yang konstan ini dibagi dengan harga sewa yang sangat kecil, hasil rasionya (GIM) otomatis melonjak tinggi.
+               
+            2. **🟢 Lokasi Ramai (GIM Tinggi — {2.4430:.4f}x):** Di zona premium, nilai tanahnya sudah pasti sangat mahal. Meskipun pihak bank berani membayar harga sewa yang tinggi, tingginya nilai investasi tanah dan properti di sana membuat angka pengalinya tetap berada di level yang kuat.
+               
+            3. **🔵 Lokasi Sedang (GIM Paling Efisien — {1.7043:.4f}x):** Ini adalah titik keseimbangan (*sweet spot*) di pasar. Di lokasi sedang, nilai properti dan harga sewa tahunan yang berlaku di lapangan saling mengimbangi secara proporsional, sehingga menghasilkan nilai pengali yang lebih rendah dan efisien bagi kedua belah pihak.
             """
         )
 
