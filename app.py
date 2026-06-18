@@ -104,16 +104,13 @@ jarak_jalan_utama = st.sidebar.number_input(
     "Jarak ke Jalan Utama (Meter)", min_value=0, value=10
 )
 
-# Baseline dasar GIM pasar berdasarkan data excel riil terbaru Anda
+# INTERPOLASI DATA BARU (VERSI DATA C)
 if mobilitas == "Ramai":
-    gim_pasar_default = 2.3130482
-    nilai_adj_mobilitas = 0
+    gim_pasar_default = 2.4430
 elif mobilitas == "Sedang":
-    gim_pasar_default = 1.8583195
-    nilai_adj_mobilitas = 0
+    gim_pasar_default = 1.7043
 else:  # Sepi
-    gim_pasar_default = 2.3032198
-    nilai_adj_mobilitas = 0
+    gim_pasar_default = 2.8581
 
 # Jika file CSV diupload, override nilai gim_pasar_default dengan hasil perhitungan CSV
 if file_diupload is not None:
@@ -156,9 +153,7 @@ if file_diupload is not None:
                     f"- Rata-rata GIM Pasar (CSV): {gim_pasar_default:.4f}"
                 )
             else:
-                st.sidebar.error(
-                    "Tidak ada data angka yang valid di kolom GIM."
-                )
+                st.sidebar.error("Tidak ada data angka yang valid di kolom GIM.")
         else:
             st.sidebar.error("Kolom 'GIM' tidak ditemukan!")
     except Exception as e:
@@ -169,7 +164,7 @@ else:
     )
 
 # Konversi Kualitatif menjadi Penyesuaian Nominal Rupiah untuk karakteristik non-GIM
-nilai_adj_jenis = 900000 if jenis_atm == "Setor Tarik (CRM)" else 0
+nilai_adj_jenis = 1000000 if jenis_atm == "Tarik Tunai Saja" else 0
 nilai_adj_jarak = max(0, (100 - jarak_jalan_utama) * 150000)
 
 total_penyesuaian = nilai_adj_jenis + nilai_adj_jarak
@@ -364,6 +359,24 @@ with tab2:
         st.markdown("#### Proyeksi Hasil Sewa:")
         st.info(
             f"### 💵 Estimasi Tarif Sewa (per Tahun): **Rp {harga_sewa_prediksi:,.0f}**"
+        )
+
+        # ==============================================================================
+        # BLOK JUSTIFIKASI EKONOMI DAN PENGETAHUAN PENGGUNA (VERSI DATA C)
+        # ==============================================================================
+        st.markdown("---")
+        st.markdown("### 💡 Mengapa Angka GIM Variatif & Dinamis? (Justifikasi Data Pasar)")
+        st.info(
+            f"""
+            Analisis ini menggunakan rujukan data pasar riil ter-update (**Versi Data C**): 
+            * **Ramai:** `2.4430` | **Sedang:** `1.7043` | **Sepi:** `2.8581`
+            
+            Mungkin Anda menyadari adanya anomali di mana **Lokasi Sepi memiliki nilai GIM yang lebih tinggi** dibandingkan Lokasi Sedang maupun Ramai. Berikut rincian analisis dasarnya:
+            
+            1. **Lokasi Sepi (GIM Tinggi - {2.8581:.4f}x):** Terjadi fenomena *Low Base Effect*. Pada wilayah sepi, harga sewa tahunan yang ditawarkan sangat rendah (sebagai angka pembagi rumus). Namun, biaya investasi fisik bangunan standardisasi ATM memiliki nilai batas minimum yang konstan. Rasio pembagian antara nilai aset fisik dan nilai sewa yang sangat kecil inilah yang melonjakkan nilai GIM.
+            2. **Lokasi Ramai (GIM Tinggi - {2.4430:.4f}x):** Pada zona premium, nilai kapitalisasi aset tanah sangat mendominasi. Meskipun pihak perbankan bersedia membayar harga sewa tinggi, nilai pasar properti intrinsik yang mahal menjaga angka multiplier tetap kuat.
+            3. **Lokasi Sedang (GIM Moderat - {1.7043:.4f}x):** Merupakan *Sweet Spot* atau titik ekuilibrium pasar yang paling efisien. Nilai properti dan harga sewa tahunan yang terbentuk di lapangan saling mengimbangi secara proporsional.
+            """
         )
 
         with st.expander("🔍 Lihat Detail Alur Perhitungan & Struktur Validasi Formula", expanded=True):
